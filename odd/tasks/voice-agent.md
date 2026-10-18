@@ -38,6 +38,7 @@ T6 | S1-S4 | Verify MVP end to end and record unresolved platform/provider decis
 T7 | S4 | Validate the KittenTTS model/runtime/weight license and Spanish voice quality before implementation lock-in | plan | research complete; runtime/quality validated in `.venv`
 T8 | S1-S4 | Package operational startup, systemd user supervision, logs, and restart/recovery guidance | implementation | 0aec6cb, b5b81eb, 714138a, d26198a
 T9 | S1-S4 | Add configurable silence endpointing and an explicit recording-stop protocol for live voice turns | implementation | 1aa1438, 30f83dc, 61be508, 6729144, a656712
+T10 | S1-S4 | Add a local CLI client for sessions, text turns, voice turns, recording stop, and interruption | implementation | 26f3b5d
 
 ## Log
 
@@ -104,3 +105,10 @@ L19. Structured voice error evidence: `a656712` treats intentional capture termi
 L20. Live conversation diagnosis: Pi RPC readiness succeeded, but the selected `openai-codex/gpt-5.5` model returned `The 'gpt-5.5' model is not supported when using Codex with a ChatGPT account.` Direct RPC validation succeeded with `openai-codex/gpt-5.6-luna`; the user service environment was updated accordingly. A daemon text turn then returned `{"ok":true,"session_id":"voice-main","text":"hola"}`. README now records the model-selection requirement.
 
 L21. Final live voice evidence: with the supervised service active, the configured supported model, Deepgram STT, and endpoint controls deployed, the full microphone -> Deepgram -> Pi RPC -> KittenTTS -> audio output turn completed successfully. The daemon returned `{"ok":true,"transcript":"Ok, probando 1, 2, 3, 4, 5, 6.","text":"Recibido."}`. This closes T8/T9 operational validation; VAD did not auto-end in the ambient-noise setup, but explicit `stop_recording` completed the same turn successfully.
+
+L22. User continuation and CLI choice (verbatim):
+> Vale, otra cosa. Relacionada al problema del modelo que tuvimos hace rato. ¿Hay alguna manera más sencilla de modificar mi perfil de modelos que no sea editar los archivos directamente?
+> Vale, ya quedó, podemos regresar a lo que estábamos haciendo antes y continuar con lo del voice-agent
+> 2. Crear cliente local CLI
+
+L23. CLI evidence: `26f3b5d` adds `python -m voice_agent.client` with `sessions`, `status`, `turn`, `voice`, `stop`, and `interrupt`, JSON output, socket override, timeout, structured exit codes, README usage, and 3 client tests. Full prior suites remain green; live sessions/status probes returned the daemon's persistent session list.
