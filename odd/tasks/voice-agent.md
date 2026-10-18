@@ -37,7 +37,7 @@ T5 | S1-S3 | Add multi-session model, observability, failure-path tests, and ope
 T6 | S1-S4 | Verify MVP end to end and record unresolved platform/provider decisions | verification | e29f7ae plus final evidence; live generated-audio Deepgram path passed
 T7 | S4 | Validate the KittenTTS model/runtime/weight license and Spanish voice quality before implementation lock-in | plan | research complete; runtime/quality validated in `.venv`
 T8 | S1-S4 | Package operational startup, systemd user supervision, logs, and restart/recovery guidance | implementation | 0aec6cb, b5b81eb, 714138a
-T9 | S1-S4 | Add configurable silence endpointing and an explicit recording-stop protocol for live voice turns | implementation | 1aa1438, 30f83dc, 61be508, 6729144
+T9 | S1-S4 | Add configurable silence endpointing and an explicit recording-stop protocol for live voice turns | implementation | 1aa1438, 30f83dc, 61be508, 6729144, a656712
 
 ## Log
 
@@ -98,3 +98,5 @@ L16. Live endpoint robustness evidence: `30f83dc` adds bounded polling around th
 L17. Blocked-read evidence: `61be508` adds a watcher that terminates the SoX process when `stop_recording` or `interrupt` is requested, covering the case where `stdout.read` is already blocked. Adapter 14, daemon 15, conversation 5, and pipeline 3 tests pass. A fresh live full-turn validation remains pending deployment of this watcher.
 
 L18. Capture cleanup evidence: `6729144` escalates capture cleanup from `terminate()` to `kill()` after a bounded wait because the real SoX process survived the first watcher. Adapter 14, daemon 15, conversation 5, and pipeline 3 tests pass. Deployment and live endpoint validation remain pending.
+
+L19. Structured voice error evidence: `a656712` treats intentional capture termination as a normal endpoint and maps `VoiceTurnError` to a redacted JSONL error response. Adapter 14, daemon 16, conversation 5, and pipeline 3 tests pass. A fresh deployed live check remains pending.
