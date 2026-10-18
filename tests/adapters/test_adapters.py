@@ -126,6 +126,31 @@ class AdapterTests(unittest.TestCase):
         chunks = list(SoxAudioInput(config, popen=lambda *args, **kwargs: process).capture(threading.Event()))
         self.assertEqual(chunks, [b"\xe8\x03\x18\xfc", b"\x00\x00\x00\x00", b"\x00\x00\x00\x00"])
 
+    def test_audio_input_honors_recording_stop_without_reading_again(self):
+        class Token:
+            def is_set(self):
+                return False
+
+            def stop_requested(self):
+                return True
+
+        class Process:
+            def __init__(self):
+                self.stdout = io.BytesIO(b"unused")
+                self.returncode = 0
+
+            def poll(self):
+                return self.returncode
+
+            def wait(self):
+                return self.returncode
+
+            def terminate(self):
+                self.returncode = 0
+
+        chunks = list(SoxAudioInput(popen=lambda *args, **kwargs: Process()).capture(Token()))
+        self.assertEqual(chunks, [])
+
     def test_audio_input_maps_missing_executable_and_cancellation(self):
         def missing(*args, **kwargs):
             raise OSError("not found")

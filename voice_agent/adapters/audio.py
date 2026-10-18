@@ -1,6 +1,7 @@
 """SoX/PipeWire-compatible audio boundaries."""
 
 from collections.abc import Iterable, Iterator, Callable
+import select
 import subprocess
 
 from .config import AudioConfig
@@ -9,8 +10,14 @@ from .protocols import Cancellation
 
 
 class SoxAudioInput:
-    def __init__(self, config: AudioConfig = AudioConfig(), popen: Callable = subprocess.Popen) -> None:
+    def __init__(
+        self,
+        config: AudioConfig = AudioConfig(),
+        popen: Callable = subprocess.Popen,
+        wait_for_data: Callable | None = None,
+    ) -> None:
         self.config, self._popen = config, popen
+        self._wait_for_data = wait_for_data or self._wait_for_data
 
     def capture(self, cancellation: Cancellation) -> Iterator[bytes]:
         if cancellation.is_set():
@@ -25,6 +32,10 @@ class SoxAudioInput:
             speech_seen = False
             captured_seconds = 0.0
             while not cancellation.is_set():
+                if self._stop_requested(cancellation):
+                    break
+                if hasattr(process.stdout, "fileno") and not self._wait_for_data(process.stdout, 0.2):
+                    continue
                 chunk = process.stdout.read(4096)
                 if not chunk:
                     break
@@ -61,6 +72,10 @@ class SoxAudioInput:
             abs(int.from_bytes(chunk[offset : offset + width], "little", signed=True))
             for offset in range(0, len(chunk) - width + 1, width)
         ) <= self.config.silence_threshold
+
+    @staticmethod
+    def _wait_for_data(stream, timeout: float) -> bool:
+        return bool(select.select([stream], [], [], timeout)[0])
 
     @staticmethod
     def _stop_requested(cancellation: Cancellation) -> bool:
