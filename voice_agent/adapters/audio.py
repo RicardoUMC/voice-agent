@@ -71,16 +71,28 @@ class SoxAudioInput:
                 raise ProviderRequestError("audio capture failed")
         finally:
             watcher_done.set()
-            if process.poll() is None:
-                process.terminate()
+            self._terminate_process(process)
 
     @staticmethod
     def _watch_process_stop(process, cancellation: Cancellation, done: threading.Event) -> None:
         while not done.wait(0.1):
             if cancellation.is_set() or SoxAudioInput._stop_requested(cancellation):
-                if process.poll() is None:
-                    process.terminate()
+                SoxAudioInput._terminate_process(process)
                 return
+
+    @staticmethod
+    def _terminate_process(process) -> None:
+        if process.poll() is not None:
+            return
+        process.terminate()
+        try:
+            process.wait(timeout=0.5)
+        except TypeError:
+            return
+        except subprocess.TimeoutExpired:
+            killer = getattr(process, "kill", None)
+            if killer is not None:
+                killer()
 
     def _is_silent(self, chunk: bytes) -> bool:
         width = self.config.sample_width
