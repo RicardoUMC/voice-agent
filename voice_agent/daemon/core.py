@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-from threading import RLock
+from dataclasses import dataclass, field
+from threading import Event, RLock
 from typing import Any
 
 from .types import Cancellation, SessionRegistry, TurnCoordinator
@@ -11,12 +11,13 @@ from .types import Cancellation, SessionRegistry, TurnCoordinator
 class CancellationState:
     cancelled: bool = False
     recording_stopped: bool = False
+    recording_stop_event: Event = field(default_factory=Event, repr=False)
 
     def is_set(self) -> bool:
         return self.cancelled
 
     def stop_requested(self) -> bool:
-        return self.recording_stopped
+        return self.recording_stopped or self.recording_stop_event.is_set()
 
 
 class DaemonCore:
@@ -77,6 +78,7 @@ class DaemonCore:
                 state = self._cancellations.get(session_id)
                 if state is not None:
                     state.recording_stopped = True
+                    state.recording_stop_event.set()
             return {"ok": True, "session_id": session_id, "stopped": state is not None}
         if operation == "interrupt":
             session_id = self._required(request, "session_id")

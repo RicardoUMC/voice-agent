@@ -3,6 +3,7 @@
 from collections.abc import Iterable, Iterator, Callable
 import select
 import subprocess
+import threading
 
 from .config import AudioConfig
 from .errors import AdapterUnavailableError, ProviderCancelledError, ProviderRequestError
@@ -27,6 +28,14 @@ class SoxAudioInput:
             process = self._popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         except OSError as exc:
             raise AdapterUnavailableError("audio capture executable is unavailable") from exc
+        watcher_done = threading.Event()
+        stop_event = getattr(cancellation, "recording_stop_event", None)
+        if hasattr(stop_event, "is_set"):
+            threading.Thread(
+                target=self._watch_process_stop,
+                args=(process, cancellation, watcher_done),
+                daemon=True,
+            ).start()
         try:
             silent_seconds = 0.0
             speech_seen = False
@@ -61,8 +70,17 @@ class SoxAudioInput:
             if process.wait() != 0:
                 raise ProviderRequestError("audio capture failed")
         finally:
+            watcher_done.set()
             if process.poll() is None:
                 process.terminate()
+
+    @staticmethod
+    def _watch_process_stop(process, cancellation: Cancellation, done: threading.Event) -> None:
+        while not done.wait(0.1):
+            if cancellation.is_set() or SoxAudioInput._stop_requested(cancellation):
+                if process.poll() is None:
+                    process.terminate()
+                return
 
     def _is_silent(self, chunk: bytes) -> bool:
         width = self.config.sample_width

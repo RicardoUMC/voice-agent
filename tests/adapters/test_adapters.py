@@ -126,6 +126,51 @@ class AdapterTests(unittest.TestCase):
         chunks = list(SoxAudioInput(config, popen=lambda *args, **kwargs: process).capture(threading.Event()))
         self.assertEqual(chunks, [b"\xe8\x03\x18\xfc", b"\x00\x00\x00\x00", b"\x00\x00\x00\x00"])
 
+    def test_audio_input_terminates_blocked_read_on_recording_stop(self):
+        class Token:
+            def __init__(self):
+                self.recording_stop_event = threading.Event()
+
+            def is_set(self):
+                return False
+
+            def stop_requested(self):
+                return self.recording_stop_event.is_set()
+
+        class Stdout:
+            def __init__(self):
+                self.released = threading.Event()
+
+            def read(self, _size):
+                self.released.wait(timeout=2)
+                return b""
+
+        class Process:
+            def __init__(self):
+                self.stdout = Stdout()
+                self.returncode = None
+
+            def poll(self):
+                return self.returncode
+
+            def wait(self):
+                self.returncode = 0
+                return 0
+
+            def terminate(self):
+                self.returncode = 0
+                self.stdout.released.set()
+
+        token = Token()
+        process = Process()
+        result = []
+        thread = threading.Thread(target=lambda: result.extend(SoxAudioInput(popen=lambda *args, **kwargs: process).capture(token)))
+        thread.start()
+        token.recording_stop_event.set()
+        thread.join(timeout=2)
+        self.assertFalse(thread.is_alive())
+        self.assertEqual(result, [])
+
     def test_audio_input_honors_recording_stop_without_reading_again(self):
         class Token:
             def is_set(self):
