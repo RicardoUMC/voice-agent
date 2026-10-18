@@ -14,12 +14,28 @@ class AudioConfig:
     capture_command: tuple[str, ...] = ("rec",)
     playback_command: tuple[str, ...] = ("play",)
     playback_format: str = "wav"
+    vad_enabled: bool = True
+    silence_threshold: int = 500
+    silence_duration: float = 0.8
+    max_capture_duration: float = 30.0
 
     def __post_init__(self) -> None:
         if self.sample_rate <= 0 or self.channels <= 0 or self.sample_width <= 0:
             raise ConfigurationError("audio dimensions must be positive")
         if self.playback_format not in {"wav", "raw"}:
             raise ConfigurationError("playback_format must be 'wav' or 'raw'")
+        if self.silence_threshold < 0 or self.silence_duration <= 0 or self.max_capture_duration <= 0:
+            raise ConfigurationError("audio endpoint values must be non-negative threshold and positive durations")
+
+    @classmethod
+    def from_environment(cls, environ: dict[str, str] | None = None) -> "AudioConfig":
+        env = os.environ if environ is None else environ
+        return cls(
+            vad_enabled=env.get("VOICE_AGENT_VAD_ENABLED", "1").lower() not in {"0", "false", "no"},
+            silence_threshold=int(env.get("VOICE_AGENT_SILENCE_THRESHOLD", "500")),
+            silence_duration=float(env.get("VOICE_AGENT_SILENCE_DURATION", "0.8")),
+            max_capture_duration=float(env.get("VOICE_AGENT_MAX_CAPTURE_DURATION", "30")),
+        )
 
 
 @dataclass(frozen=True)

@@ -10,9 +10,13 @@ from .types import Cancellation, SessionRegistry, TurnCoordinator
 @dataclass
 class CancellationState:
     cancelled: bool = False
+    recording_stopped: bool = False
 
     def is_set(self) -> bool:
         return self.cancelled
+
+    def stop_requested(self) -> bool:
+        return self.recording_stopped
 
 
 class DaemonCore:
@@ -67,6 +71,13 @@ class DaemonCore:
                 with self._state_lock:
                     if self._cancellations.get(session_id) is cancellation:
                         self._cancellations.pop(session_id, None)
+        if operation == "stop_recording":
+            session_id = self._required(request, "session_id")
+            with self._state_lock:
+                state = self._cancellations.get(session_id)
+                if state is not None:
+                    state.recording_stopped = True
+            return {"ok": True, "session_id": session_id, "stopped": state is not None}
         if operation == "interrupt":
             session_id = self._required(request, "session_id")
             with self._state_lock:

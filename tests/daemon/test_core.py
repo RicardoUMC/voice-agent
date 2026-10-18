@@ -57,12 +57,46 @@ class FakeVoiceCoordinator:
         return VoiceTurnResult(session_id, "hola", "respuesta")
 
 
+class BlockingVoiceCoordinator:
+    def __init__(self):
+        self.started = threading.Event()
+        self.release = threading.Event()
+        self.cancellation = None
+
+    def run(self, session_id, cancellation):
+        self.cancellation = cancellation
+        self.started.set()
+        self.release.wait(timeout=2)
+        return VoiceTurnResult(session_id, "hola", "respuesta")
+
+
 class DaemonCoreTests(unittest.TestCase):
     def test_cancellation_state_supports_adapter_protocol(self):
         state = CancellationState()
         self.assertFalse(state.is_set())
         state.cancelled = True
         self.assertTrue(state.is_set())
+
+    def test_stop_recording_requests_endpoint_without_cancelling_turn(self):
+        with tempfile.TemporaryDirectory() as directory:
+            voice = BlockingVoiceCoordinator()
+            core = DaemonCore(JsonSessionRegistry(Path(directory) / "sessions.json"), FakeCoordinator(), voice_coordinator=voice)
+            result = {}
+            thread = threading.Thread(
+                target=lambda: result.setdefault("response", core.handle({"op": "voice_turn", "session_id": "voice-main"}))
+            )
+            thread.start()
+            self.assertTrue(voice.started.wait(timeout=2))
+            self.assertEqual(core.handle({"op": "stop_recording", "session_id": "voice-main"}), {
+                "ok": True,
+                "session_id": "voice-main",
+                "stopped": True,
+            })
+            self.assertTrue(voice.cancellation.stop_requested())
+            voice.release.set()
+            thread.join(timeout=2)
+            self.assertFalse(thread.is_alive())
+            self.assertEqual(result["response"]["ok"], True)
 
     def test_voice_turn_persists_transcript_and_response(self):
         with tempfile.TemporaryDirectory() as directory:

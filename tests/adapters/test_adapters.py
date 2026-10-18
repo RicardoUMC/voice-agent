@@ -99,6 +99,33 @@ class AdapterTests(unittest.TestCase):
         self.assertEqual(calls, [("play", "-q", "-")])
         self.assertEqual(process.stdin.data, [b"RIFF"])
 
+    def test_audio_input_stops_after_speech_and_trailing_silence(self):
+        class Stdout:
+            def __init__(self):
+                self.chunks = iter([b"\xe8\x03\x18\xfc", b"\x00\x00\x00\x00", b"\x00\x00\x00\x00", b"extra"])
+
+            def read(self, _size):
+                return next(self.chunks, b"")
+
+        class Process:
+            def __init__(self):
+                self.stdout = Stdout()
+                self.returncode = 0
+
+            def poll(self):
+                return self.returncode
+
+            def wait(self):
+                return self.returncode
+
+            def terminate(self):
+                self.returncode = 0
+
+        process = Process()
+        config = AudioConfig(sample_rate=4, silence_duration=1.0, max_capture_duration=5.0)
+        chunks = list(SoxAudioInput(config, popen=lambda *args, **kwargs: process).capture(threading.Event()))
+        self.assertEqual(chunks, [b"\xe8\x03\x18\xfc", b"\x00\x00\x00\x00", b"\x00\x00\x00\x00"])
+
     def test_audio_input_maps_missing_executable_and_cancellation(self):
         def missing(*args, **kwargs):
             raise OSError("not found")
@@ -110,6 +137,18 @@ class AdapterTests(unittest.TestCase):
         token.set()
         with self.assertRaises(ProviderCancelledError):
             list(SoxAudioInput(popen=lambda *args, **kwargs: None).capture(token))
+
+    def test_audio_config_reads_endpoint_environment(self):
+        config = AudioConfig.from_environment({
+            "VOICE_AGENT_VAD_ENABLED": "false",
+            "VOICE_AGENT_SILENCE_THRESHOLD": "900",
+            "VOICE_AGENT_SILENCE_DURATION": "1.25",
+            "VOICE_AGENT_MAX_CAPTURE_DURATION": "12",
+        })
+        self.assertFalse(config.vad_enabled)
+        self.assertEqual(config.silence_threshold, 900)
+        self.assertEqual(config.silence_duration, 1.25)
+        self.assertEqual(config.max_capture_duration, 12.0)
 
     def test_deepgram_websocket_parses_streaming_channel_shape(self):
         class Socket:

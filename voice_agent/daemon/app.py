@@ -5,7 +5,7 @@ from pathlib import Path
 import shlex
 
 from voice_agent.adapters.audio import SoxAudioInput, SoxAudioOutput
-from voice_agent.adapters.config import DeepgramConfig
+from voice_agent.adapters.config import AudioConfig, DeepgramConfig
 from voice_agent.adapters.deepgram import DeepgramSTT, DeepgramWebSocketTransport
 from voice_agent.adapters.kitten_tts import KittenTTS
 from voice_agent.conversation.pi_rpc import PiRpcConfig, PiRpcConversationBackend
@@ -37,12 +37,13 @@ class VoiceDaemon:
         registry = JsonSessionRegistry(config.state_path)
         coordinator = PiSessionCoordinator(self._make_backend)
         self._coordinator = coordinator
+        audio_config = AudioConfig.from_environment()
         voice = VoiceTurnCoordinator(
-            SoxAudioInput(),
+            SoxAudioInput(audio_config),
             DeepgramSTT(DeepgramConfig.from_environment(), streaming_transport=DeepgramWebSocketTransport()),
             TextConversationAdapter(coordinator),
             KittenTTS(),
-            SoxAudioOutput(),
+            SoxAudioOutput(audio_config),
             on_event=self._log_event,
         )
         self._voice = voice

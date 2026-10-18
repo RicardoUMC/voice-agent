@@ -37,7 +37,10 @@ Each request and response is one JSON object terminated by LF.
 {"op":"sessions"}
 {"op":"turn","session_id":"voice-main","text":"Hola"}
 {"op":"interrupt","session_id":"voice-main"}
+{"op":"stop_recording","session_id":"voice-main"}
 ```
+
+`stop_recording` ends the microphone capture and continues the turn through STT, Pi RPC, TTS, and playback. `interrupt` cancels the entire turn. The default capture path also uses PCM silence endpointing after speech; tune or disable it with the audio environment variables below.
 
 The protocol is session-addressed from the beginning, but the MVP exposes only one local client. A future authenticated mobile client can use the same logical protocol without changing the conversation model.
 
@@ -55,6 +58,10 @@ Environment variables:
 | `DEEPGRAM_API_KEY` | unset | Deepgram credential |
 | `DEEPGRAM_MODEL` | `nova-3` | STT model |
 | `DEEPGRAM_LANGUAGE` | `es-419` | STT language |
+| `VOICE_AGENT_VAD_ENABLED` | `1` | Enable PCM silence endpointing |
+| `VOICE_AGENT_SILENCE_THRESHOLD` | `500` | Maximum absolute PCM sample treated as silence |
+| `VOICE_AGENT_SILENCE_DURATION` | `0.8` | Trailing silence seconds required to end capture |
+| `VOICE_AGENT_MAX_CAPTURE_DURATION` | `30` | Maximum capture duration in seconds |
 
 Pi tools and extensions remain an explicit allowlist decision; the daemon must not inherit an unrestricted interactive Pi configuration by accident.
 
