@@ -39,6 +39,9 @@ T7 | S4 | Validate the KittenTTS model/runtime/weight license and Spanish voice 
 T8 | S1-S4 | Package operational startup, systemd user supervision, logs, and restart/recovery guidance | implementation | 0aec6cb, b5b81eb, 714138a, d26198a
 T9 | S1-S4 | Add configurable silence endpointing and an explicit recording-stop protocol for live voice turns | implementation | 1aa1438, 30f83dc, 61be508, 6729144, a656712
 T10 | S1-S4 | Add a local CLI client for sessions, text turns, voice turns, recording stop, and interruption | implementation | 26f3b5d
+T11 | S1-S4 | Calibrate and document VAD settings using measured microphone noise | configuration | TBD
+T12 | S1-S4 | Add an installable CLI entry point for the daemon client | implementation | TBD
+T13 | S1-S4 | Make the Pi tool and extension allowlist explicit in daemon configuration | implementation | TBD
 
 ## Log
 
@@ -112,3 +115,6 @@ L22. User continuation and CLI choice (verbatim):
 > 2. Crear cliente local CLI
 
 L23. CLI evidence: `26f3b5d` adds `python -m voice_agent.client` with `sessions`, `status`, `turn`, `voice`, `stop`, and `interrupt`, JSON output, socket override, timeout, structured exit codes, README usage, and 3 client tests. Full prior suites remain green; live sessions/status probes returned the daemon's persistent session list.
+
+L24. User requested the remaining improvements sequentially through item 3 (verbatim):
+> Vale, sigamos uno po uno hasta el punto 3 porfa

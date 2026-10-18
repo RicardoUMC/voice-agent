@@ -75,6 +75,19 @@ Environment variables:
 | `VOICE_AGENT_SILENCE_DURATION` | `0.8` | Trailing silence seconds required to end capture |
 | `VOICE_AGENT_MAX_CAPTURE_DURATION` | `30` | Maximum capture duration in seconds |
 
+### VAD calibration
+
+A three-second ambient capture on the validated workstation measured a peak PCM amplitude of `95` and RMS `37.5`. Keep a margin above that noise floor; the recommended starting point for this microphone is:
+
+```dotenv
+VOICE_AGENT_VAD_ENABLED=1
+VOICE_AGENT_SILENCE_THRESHOLD=250
+VOICE_AGENT_SILENCE_DURATION=0.8
+VOICE_AGENT_MAX_CAPTURE_DURATION=30
+```
+
+Put these values in the user service environment file (`~/.config/voice-agent/environment`) and restart the service. If quiet speech is cut off, increase the threshold to `350` or the silence duration to `1.0`; if capture remains open after speech, reduce the duration to `0.6`. `stop_recording` remains the deterministic fallback when ambient noise prevents automatic endpointing.
+
 Pi tools and extensions remain an explicit allowlist decision; the daemon must not inherit an unrestricted interactive Pi configuration by accident.
 
 ## Provider boundaries
