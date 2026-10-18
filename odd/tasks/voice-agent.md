@@ -37,7 +37,7 @@ T5 | S1-S3 | Add multi-session model, observability, failure-path tests, and ope
 T6 | S1-S4 | Verify MVP end to end and record unresolved platform/provider decisions | verification | e29f7ae plus final evidence; live generated-audio Deepgram path passed
 T7 | S4 | Validate the KittenTTS model/runtime/weight license and Spanish voice quality before implementation lock-in | plan | research complete; runtime/quality validated in `.venv`
 T8 | S1-S4 | Package operational startup, systemd user supervision, logs, and restart/recovery guidance | implementation | 0aec6cb, b5b81eb, 714138a
-T9 | S1-S4 | Add configurable silence endpointing and an explicit recording-stop protocol for live voice turns | implementation | 1aa1438
+T9 | S1-S4 | Add configurable silence endpointing and an explicit recording-stop protocol for live voice turns | implementation | 1aa1438, 30f83dc
 
 ## Log
 
@@ -92,3 +92,5 @@ L14. User endpoint decision (verbatim):
 > Ambos
 
 L15. Endpointing implementation evidence: `1aa1438` adds PCM VAD with configurable trailing silence/max duration, `stop_recording` separate from `interrupt`, environment controls, README protocol/config documentation, and regression tests. All focused suites pass. The deployed systemd unit still needs restart before live endpointing validation.
+
+L16. Live endpoint robustness evidence: `30f83dc` adds bounded polling around the SoX stdout file descriptor and checks `stop_requested` before reads, fixing a real idle-capture block that prevented endpoint control. Adapter 13, daemon 15, conversation 5, and pipeline 3 tests pass.
