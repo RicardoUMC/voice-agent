@@ -14,6 +14,8 @@ import threading
 import time
 from typing import Any, Protocol
 
+_TOOL_NAME = re.compile(r"[A-Za-z0-9_*.-]+")
+
 from voice_agent.adapters.errors import (
     AdapterUnavailableError,
     ProviderCancelledError,
@@ -34,6 +36,7 @@ class PiRpcConfig:
     command: tuple[str, ...] = ("pi", "--mode", "rpc")
     session_id: str = "voice-agent"
     session_dir: str | None = None
+    tools: tuple[str, ...] = ("read", "grep", "find")
     startup_timeout: float = 10.0
     command_timeout: float = 60.0
 
@@ -44,12 +47,18 @@ class PiRpcConfig:
             raise ValueError("Pi RPC session_id must use letters, numbers, '.', '_' or '-'")
         if self.session_dir is not None and (not isinstance(self.session_dir, str) or not self.session_dir.strip() or "\x00" in self.session_dir):
             raise ValueError("Pi RPC session_dir must be a non-empty path")
+        if not isinstance(self.tools, tuple) or any(not isinstance(tool, str) or _TOOL_NAME.fullmatch(tool) is None for tool in self.tools):
+            raise ValueError("Pi RPC tools must contain valid tool names")
 
     @property
     def child_command(self) -> tuple[str, ...]:
         command = (*self.command, "--session-id", self.session_id)
         if self.session_dir is not None:
             command += ("--session-dir", os.fspath(self.session_dir))
+        if self.tools:
+            command += ("--tools", ",".join(self.tools))
+        else:
+            command += ("--no-tools",)
         return command
 
 

@@ -91,8 +91,11 @@ class PiRpcTests(unittest.TestCase):
             process_factory=lambda command: (seen.append(command) or process),
             startup_timeout=1,
         )
-        self.assertEqual(seen, [("fake-pi", "--mode", "rpc", "--session-id", "conversation-7", "--session-dir", "/tmp/pi-sessions")])
+        self.assertEqual(seen, [("fake-pi", "--mode", "rpc", "--session-id", "conversation-7", "--session-dir", "/tmp/pi-sessions", "--tools", "read,grep,find")])
         backend.close()
+
+    def test_pi_rpc_can_disable_all_tools_explicitly(self):
+        self.assertIn("--no-tools", PiRpcConfig(tools=()).child_command)
 
     def test_pi_rpc_streams_deltas_and_confirms_readiness(self):
         process = FakeProcess()

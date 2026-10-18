@@ -37,11 +37,13 @@ class ServerRuntimeTests(unittest.TestCase):
             "VOICE_AGENT_HOME": "/tmp/voice-agent",
             "VOICE_AGENT_PI_COMMAND": "pi --mode rpc",
             "VOICE_AGENT_PI_SESSION_DIR": "/tmp/pi-sessions",
+            "VOICE_AGENT_PI_TOOLS": "read, grep, mcp__local__search",
         })
         self.assertEqual(settings.socket_path, Path("/tmp/voice-agent/voice-agent.sock"))
         self.assertEqual(settings.state_path, Path("/tmp/voice-agent/sessions.json"))
         self.assertEqual(settings.pi_command, ("pi", "--mode", "rpc"))
         self.assertEqual(settings.pi_session_dir, Path("/tmp/pi-sessions"))
+        self.assertEqual(settings.pi_tools, ("read", "grep", "mcp__local__search"))
 
     def test_coordinator_reuses_one_backend_per_session_and_closes_it(self):
         created = []

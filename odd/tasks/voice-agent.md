@@ -39,8 +39,8 @@ T7 | S4 | Validate the KittenTTS model/runtime/weight license and Spanish voice 
 T8 | S1-S4 | Package operational startup, systemd user supervision, logs, and restart/recovery guidance | implementation | 0aec6cb, b5b81eb, 714138a, d26198a
 T9 | S1-S4 | Add configurable silence endpointing and an explicit recording-stop protocol for live voice turns | implementation | 1aa1438, 30f83dc, 61be508, 6729144, a656712
 T10 | S1-S4 | Add a local CLI client for sessions, text turns, voice turns, recording stop, and interruption | implementation | 26f3b5d
-T11 | S1-S4 | Calibrate and document VAD settings using measured microphone noise | configuration | TBD
-T12 | S1-S4 | Add an installable CLI entry point for the daemon client | implementation | TBD
+T11 | S1-S4 | Calibrate and document VAD settings using measured microphone noise | configuration | 428c2d3
+T12 | S1-S4 | Add an installable CLI entry point for the daemon client | implementation | d94c206
 T13 | S1-S4 | Make the Pi tool and extension allowlist explicit in daemon configuration | implementation | TBD
 
 ## Log
@@ -118,3 +118,5 @@ L23. CLI evidence: `26f3b5d` adds `python -m voice_agent.client` with `sessions`
 
 L24. User requested the remaining improvements sequentially through item 3 (verbatim):
 > Vale, sigamos uno po uno hasta el punto 3 porfa
+
+L25. Improvement evidence: VAD ambient measurement was peak 95/RMS 37.5; `VOICE_AGENT_SILENCE_THRESHOLD=250`, `VOICE_AGENT_SILENCE_DURATION=0.8`, and related values were applied to the user service and verified in the running process. `d94c206` adds editable packaging and `voice-agent`/`voice-agent-client` entry points. The allowlist implementation emits `--tools read,grep,find` by default or `--no-tools` when empty, parses `VOICE_AGENT_PI_TOOLS`, documents extension behavior, and the restarted service reports `VOICE_AGENT_PI_TOOLS=read,grep,find` while serving sessions.

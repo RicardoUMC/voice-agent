@@ -75,6 +75,7 @@ Environment variables:
 | `VOICE_AGENT_STATE` | `<home>/sessions.json` | Daemon session registry |
 | `VOICE_AGENT_PI_SESSION_DIR` | Pi default | Persistent Pi session directory |
 | `VOICE_AGENT_PI_COMMAND` | `pi --mode rpc` | Pi executable and startup arguments |
+| `VOICE_AGENT_PI_TOOLS` | `read,grep,find` | Explicit comma-separated Pi tool allowlist; empty disables all tools |
 | `DEEPGRAM_API_KEY` | unset | Deepgram credential |
 | `DEEPGRAM_MODEL` | `nova-3` | STT model |
 | `DEEPGRAM_LANGUAGE` | `es-419` | STT language |
@@ -96,7 +97,7 @@ VOICE_AGENT_MAX_CAPTURE_DURATION=30
 
 Put these values in the user service environment file (`~/.config/voice-agent/environment`) and restart the service. If quiet speech is cut off, increase the threshold to `350` or the silence duration to `1.0`; if capture remains open after speech, reduce the duration to `0.6`. `stop_recording` remains the deterministic fallback when ambient noise prevents automatic endpointing.
 
-Pi tools and extensions remain an explicit allowlist decision; the daemon must not inherit an unrestricted interactive Pi configuration by accident.
+The daemon passes an explicit Pi tool allowlist on every RPC child. The default is read-only (`read,grep,find`); set `VOICE_AGENT_PI_TOOLS=` to pass `--no-tools`, or name additional approved tools explicitly (including `mcp__...` tools). The daemon must not inherit an unrestricted interactive Pi configuration by accident. Extensions remain disabled unless the selected Pi command/configuration explicitly enables them.
 
 ## Provider boundaries
 

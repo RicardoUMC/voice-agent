@@ -24,6 +24,7 @@ class VoiceDaemonSettings:
     state_path: Path
     pi_session_dir: Path | None = None
     pi_command: tuple[str, ...] = ("pi", "--mode", "rpc")
+    pi_tools: tuple[str, ...] = ("read", "grep", "find")
     socket_mode: int = 0o600
 
     def daemon_config(self) -> DaemonConfig:
@@ -59,6 +60,7 @@ class VoiceDaemon:
                 command=self.settings.pi_command,
                 session_id=session_id,
                 session_dir=str(self.settings.pi_session_dir) if self.settings.pi_session_dir else None,
+                tools=self.settings.pi_tools,
             )
         )
 
@@ -97,9 +99,12 @@ def settings_from_environment(environ: dict[str, str] | None = None) -> VoiceDae
     state_path = Path(env.get("VOICE_AGENT_STATE", root / "sessions.json")).expanduser()
     pi_session_dir = env.get("VOICE_AGENT_PI_SESSION_DIR")
     command = tuple(shlex.split(env.get("VOICE_AGENT_PI_COMMAND", "pi --mode rpc")))
+    raw_tools = env.get("VOICE_AGENT_PI_TOOLS", "read,grep,find")
+    tools = tuple(tool.strip() for tool in raw_tools.split(",") if tool.strip())
     return VoiceDaemonSettings(
         socket_path=socket_path,
         state_path=state_path,
         pi_session_dir=Path(pi_session_dir).expanduser() if pi_session_dir else None,
         pi_command=command,
+        pi_tools=tools,
     )
