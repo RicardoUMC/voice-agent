@@ -78,6 +78,24 @@ export DEEPGRAM_API_KEY=...
 
 The audio adapter expects SoX (`rec` and `play`) or equivalent commands configured explicitly. KittenTTS 2 requires its model weights to be downloaded on first use; that operation should be performed deliberately, not during daemon import.
 
+## Run as a user service
+
+`deploy/voice-agent.service` provides a systemd user-unit template for this checkout. Create the credential environment file with restrictive permissions, then install and enable the unit:
+
+```bash
+install -d -m 700 "$HOME/.config/voice-agent"
+printf 'DEEPGRAM_API_KEY=%s\n' "$DEEPGRAM_API_KEY" > "$HOME/.config/voice-agent/environment"
+chmod 600 "$HOME/.config/voice-agent/environment"
+mkdir -p "$HOME/.config/systemd/user"
+cp deploy/voice-agent.service "$HOME/.config/systemd/user/voice-agent.service"
+systemctl --user daemon-reload
+systemctl --user enable --now voice-agent.service
+systemctl --user status voice-agent.service
+journalctl --user -u voice-agent.service -f
+```
+
+The unit restarts on failure, keeps the Unix socket and session state under the user account, and does not expose a network listener. Do not enable it until the `.venv`, Pi executable, provider credentials, and audio devices are ready.
+
 ## Checks
 
 Pytest is not required for the current test slices. Run:

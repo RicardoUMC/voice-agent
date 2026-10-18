@@ -1,0 +1,20 @@
+[Unit]
+Description=Persistent Pi voice-agent daemon
+After=default.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/Proyectos/voice-agent
+EnvironmentFile=-%h/.config/voice-agent/environment
+Environment=PYTHONUNBUFFERED=1
+ExecStart=%h/Proyectos/voice-agent/.venv/bin/python -m voice_agent
+Restart=on-failure
+RestartSec=5s
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=%h/.local/state/voice-agent %h/.pi/agent/sessions
+
+[Install]
+WantedBy=default.target

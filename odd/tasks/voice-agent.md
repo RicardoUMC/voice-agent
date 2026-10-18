@@ -35,7 +35,8 @@ T3 | S1-S3 | Implement Pi RPC conversation adapter with dedicated-session serial
 T4 | S1-S2 | Implement audio/STT/TTS adapters with KittenTTS first and provider/model substitution points | implementation | 7b6084e, ccc7a06, e29f7ae
 T5 | S1-S3 | Add multi-session model, observability, failure-path tests, and operational documentation | implementation | 15c83d1
 T6 | S1-S4 | Verify MVP end to end and record unresolved platform/provider decisions | verification | e29f7ae plus final evidence; live generated-audio Deepgram path passed
-T7 | S4 | Validate the KittenTTS model/runtime/weight license and Spanish voice quality before implementation lock-in | plan | research complete; runtime/quality validation pending
+T7 | S4 | Validate the KittenTTS model/runtime/weight license and Spanish voice quality before implementation lock-in | plan | research complete; runtime/quality validated in `.venv`
+T8 | S1-S4 | Package operational startup, systemd user supervision, logs, and restart/recovery guidance | implementation | TBD
 
 ## Log
 
@@ -78,3 +79,8 @@ L8. Integration evidence: `ccc7a06` adds injectable Deepgram streaming transport
 L9. Final local provider evidence: `ea094b0` selects the installed KittenTTS `Spanish` voice after live validation rejected the previous `expr-voice-4-f` default. KittenTTS 2 `emb4` synthesis succeeded in the project `.venv`, producing a 24 kHz WAV with 81,120 frames. `websocket-client` 1.9.2, `kittenml` 0.9.4, VoiceDaemon provider wiring, all focused suites, compileall, CLI help, and Pi RPC readiness passed. A live Deepgram network/audio turn was intentionally not run; no external provider cost or credential use was added beyond local runtime setup.
 
 L10. Authorized live STT evidence: `e29f7ae` fixes Deepgram WebSocket PCM metadata, streaming response shape, `Finalize`/`CloseStream` ordering, and realtime pacing. The full authorized path KittenTTS Spanish WAV -> ffmpeg 16 kHz mono PCM -> real Deepgram Nova-3 WebSocket returned non-empty Spanish text (`Hola, esta es una prueba real de la gente de voz.`). Recognition differed slightly from the source phrase (`agente`/`gente`), so this proves transport and provider operation, not word-perfect accuracy. Final focused checks pass: daemon 12, adapters 10, conversation 5, voice pipeline 3, compileall, CLI help, Pi readiness, and live TTS/STT.
+
+L11. User continuation (verbatim):
+> Vale, sigamos entonces
+
+L12. Operational slice evidence: added `deploy/voice-agent.service`, README installation/logging guidance, and standard logging configuration in `python -m voice_agent`. Focused suites, compileall, CLI help, `systemd-analyze verify`, and `git diff --check` pass. The service was not enabled automatically; installation remains an explicit operator action.
