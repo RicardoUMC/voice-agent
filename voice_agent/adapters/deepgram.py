@@ -41,6 +41,9 @@ class DeepgramHttpTransport:
                 "smart_format": "true",
                 "punctuate": "true",
                 "endpointing": "300",
+                "encoding": "linear16",
+                "sample_rate": str(config.sample_rate),
+                "channels": str(config.channels),
             }
         )
         return f"{scheme}://api.deepgram.com/v1/listen?{params}"
