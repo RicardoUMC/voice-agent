@@ -36,7 +36,7 @@ T4 | S1-S2 | Implement audio/STT/TTS adapters with KittenTTS first and provider/
 T5 | S1-S3 | Add multi-session model, observability, failure-path tests, and operational documentation | implementation | 15c83d1
 T6 | S1-S4 | Verify MVP end to end and record unresolved platform/provider decisions | verification | e29f7ae plus final evidence; live generated-audio Deepgram path passed
 T7 | S4 | Validate the KittenTTS model/runtime/weight license and Spanish voice quality before implementation lock-in | plan | research complete; runtime/quality validated in `.venv`
-T8 | S1-S4 | Package operational startup, systemd user supervision, logs, and restart/recovery guidance | implementation | TBD
+T8 | S1-S4 | Package operational startup, systemd user supervision, logs, and restart/recovery guidance | implementation | 0aec6cb
 
 ## Log
 
