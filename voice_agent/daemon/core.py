@@ -11,6 +11,9 @@ from .types import Cancellation, SessionRegistry, TurnCoordinator
 class CancellationState:
     cancelled: bool = False
 
+    def is_set(self) -> bool:
+        return self.cancelled
+
 
 class DaemonCore:
     """Transport-neutral request dispatcher for one or more persistent sessions."""

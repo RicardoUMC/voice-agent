@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 
 from voice_agent.daemon.config import DaemonConfig
-from voice_agent.daemon.core import DaemonCore
+from voice_agent.daemon.core import CancellationState, DaemonCore
 from voice_agent.daemon.sessions import JsonSessionRegistry, SessionStateError
 from voice_agent.daemon.types import TurnResult
 from voice_agent.voice.pipeline import VoiceTurnResult
@@ -58,6 +58,12 @@ class FakeVoiceCoordinator:
 
 
 class DaemonCoreTests(unittest.TestCase):
+    def test_cancellation_state_supports_adapter_protocol(self):
+        state = CancellationState()
+        self.assertFalse(state.is_set())
+        state.cancelled = True
+        self.assertTrue(state.is_set())
+
     def test_voice_turn_persists_transcript_and_response(self):
         with tempfile.TemporaryDirectory() as directory:
             registry = JsonSessionRegistry(Path(directory) / "sessions.json")
