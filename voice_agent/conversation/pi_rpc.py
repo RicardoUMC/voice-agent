@@ -7,6 +7,7 @@ from dataclasses import dataclass
 import itertools
 import os
 import json
+import re
 import queue
 import subprocess
 import threading
@@ -39,8 +40,8 @@ class PiRpcConfig:
     def __post_init__(self) -> None:
         if not self.command or self.startup_timeout <= 0 or self.command_timeout <= 0:
             raise ValueError("Pi RPC command and timeouts are required")
-        if not isinstance(self.session_id, str) or not self.session_id.strip() or "\x00" in self.session_id:
-            raise ValueError("Pi RPC session_id must be a non-empty string")
+        if not isinstance(self.session_id, str) or re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", self.session_id) is None:
+            raise ValueError("Pi RPC session_id must use letters, numbers, '.', '_' or '-'")
         if self.session_dir is not None and (not isinstance(self.session_dir, str) or not self.session_dir.strip() or "\x00" in self.session_dir):
             raise ValueError("Pi RPC session_dir must be a non-empty path")
 

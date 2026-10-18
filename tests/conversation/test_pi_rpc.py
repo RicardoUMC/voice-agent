@@ -79,6 +79,10 @@ class FakeProcess:
 
 
 class PiRpcTests(unittest.TestCase):
+    def test_session_id_matches_pi_persistence_identifier_rules(self):
+        with self.assertRaises(ValueError):
+            PiRpcConfig(session_id="../unsafe")
+
     def test_session_flags_are_appended_to_injected_base_command(self):
         process = FakeProcess()
         seen = []
