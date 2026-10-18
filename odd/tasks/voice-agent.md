@@ -36,7 +36,7 @@ T4 | S1-S2 | Implement audio/STT/TTS adapters with KittenTTS first and provider/
 T5 | S1-S3 | Add multi-session model, observability, failure-path tests, and operational documentation | implementation | 15c83d1
 T6 | S1-S4 | Verify MVP end to end and record unresolved platform/provider decisions | verification | e29f7ae plus final evidence; live generated-audio Deepgram path passed
 T7 | S4 | Validate the KittenTTS model/runtime/weight license and Spanish voice quality before implementation lock-in | plan | research complete; runtime/quality validated in `.venv`
-T8 | S1-S4 | Package operational startup, systemd user supervision, logs, and restart/recovery guidance | implementation | 0aec6cb
+T8 | S1-S4 | Package operational startup, systemd user supervision, logs, and restart/recovery guidance | implementation | 0aec6cb, b5b81eb, 714138a
 
 ## Log
 
@@ -84,3 +84,5 @@ L11. User continuation (verbatim):
 > Vale, sigamos entonces
 
 L12. Operational slice evidence: added `deploy/voice-agent.service`, README installation/logging guidance, and standard logging configuration in `python -m voice_agent`. Focused suites, compileall, CLI help, `systemd-analyze verify`, and `git diff --check` pass. The service was not enabled automatically; installation remains an explicit operator action.
+
+L13. Live service evidence: after enabling the user unit, the first real `voice_turn` exposed a cancellation interface mismatch (`CancellationState` lacked `is_set`), fixed in `b5b81eb`. A second real capture verified interrupt behavior and exposed an uncaught cancellation traceback, fixed in `714138a`. The deployed daemon now returns `{"ok":false,"error":"voice turn cancelled during audio_input"}` cleanly and remains active. Full spoken microphone-to-Pi-to-TTS-to-speaker validation remains pending user speech during capture.
