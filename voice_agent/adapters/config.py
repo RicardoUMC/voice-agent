@@ -29,6 +29,7 @@ class DeepgramConfig:
     language: str = "es-419"
     sample_rate: int = 16_000
     channels: int = 1
+    realtime_pacing: bool = True
 
     def __post_init__(self) -> None:
         if not self.api_key.strip():

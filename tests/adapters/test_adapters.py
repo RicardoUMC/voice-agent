@@ -5,7 +5,7 @@ import wave
 
 from voice_agent.adapters.audio import SoxAudioInput, SoxAudioOutput
 from voice_agent.adapters.config import AudioConfig, DeepgramConfig, KittenTTSConfig
-from voice_agent.adapters.deepgram import DeepgramSTT
+from voice_agent.adapters.deepgram import DeepgramSTT, DeepgramWebSocketTransport
 from voice_agent.adapters.errors import (
     AdapterUnavailableError,
     ConfigurationError,
@@ -110,6 +110,31 @@ class AdapterTests(unittest.TestCase):
         token.set()
         with self.assertRaises(ProviderCancelledError):
             list(SoxAudioInput(popen=lambda *args, **kwargs: None).capture(token))
+
+    def test_deepgram_websocket_parses_streaming_channel_shape(self):
+        class Socket:
+            def __init__(self):
+                self.sent = []
+                self.messages = iter([
+                    '{"type":"Results","channel":{"alternatives":[{"transcript":"hola streaming"}]}}',
+                    '{"type":"Metadata"}',
+                ])
+
+            def send(self, payload, **kwargs):
+                self.sent.append(payload)
+
+            def recv(self):
+                return next(self.messages)
+
+            def close(self):
+                pass
+
+        socket = Socket()
+        transport = DeepgramWebSocketTransport(websocket_factory=lambda *args, **kwargs: socket)
+        result = transport([b"pcm"], DeepgramConfig("key"), threading.Event())
+        self.assertEqual(result, "hola streaming")
+        self.assertIn('{"type": "Finalize"}', socket.sent)
+        self.assertIn('{"type": "CloseStream"}', socket.sent)
 
     def test_deepgram_streaming_transport_is_injectable(self):
         received = []

@@ -5,6 +5,7 @@ import json
 import urllib.error
 import urllib.parse
 import urllib.request
+import time
 
 from .config import DeepgramConfig
 from .errors import ProviderCancelledError, ProviderRequestError, AdapterUnavailableError
@@ -74,7 +75,12 @@ class DeepgramWebSocketTransport:
                 if cancellation.is_set():
                     raise ProviderCancelledError("Deepgram request cancelled")
                 ws.send(chunk, opcode=2)
-            ws.send(json.dumps({"type": "CloseStream"}))
+                if config.realtime_pacing:
+                    time.sleep(len(chunk) / (config.sample_rate * config.channels * 2))
+            # Finalize asks Deepgram to flush buffered audio while keeping the
+            # stream open long enough to deliver the final Results message.
+            # Closing immediately can discard the last partial utterance.
+            ws.send(json.dumps({"type": "Finalize"}))
             transcripts: list[str] = []
             while True:
                 if cancellation.is_set():
@@ -106,6 +112,10 @@ class DeepgramWebSocketTransport:
         finally:
             if ws is not None:
                 try:
+                    ws.send(json.dumps({"type": "CloseStream"}))
+                except Exception:
+                    pass
+                try:
                     ws.close()
                 except Exception:
                     pass
@@ -115,7 +125,10 @@ def _transcript_from_response(value: object, allow_empty: bool = False) -> str:
     if not isinstance(value, dict):
         raise TypeError("response must be an object")
     try:
-        transcript = value["results"]["channels"][0]["alternatives"][0]["transcript"]
+        if "channel" in value:
+            transcript = value["channel"]["alternatives"][0]["transcript"]
+        else:
+            transcript = value["results"]["channels"][0]["alternatives"][0]["transcript"]
     except (KeyError, IndexError, TypeError) as exc:
         if allow_empty and value.get("type") in {"Results", "Metadata"}:
             return ""
