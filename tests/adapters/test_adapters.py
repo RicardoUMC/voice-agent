@@ -76,6 +76,20 @@ class AdapterTests(unittest.TestCase):
         with self.assertRaises(ProviderCancelledError):
             list(SoxAudioInput(popen=lambda *args, **kwargs: None).capture(token))
 
+    def test_deepgram_streaming_transport_is_injectable(self):
+        received = []
+
+        def streaming(chunks, config, cancellation):
+            received.append((b"".join(chunks), config.model, config.language))
+            return "hola en streaming"
+
+        result = DeepgramSTT(
+            DeepgramConfig("key"),
+            streaming_transport=streaming,
+        ).transcribe([b"a", b"b"], threading.Event())
+        self.assertEqual(result, "hola en streaming")
+        self.assertEqual(received, [(b"ab", "nova-3", "es-419")])
+
     def test_deepgram_http_path_is_explicitly_non_streaming_for_now(self):
         # The current HTTP transport buffers PCM before one request; Pi's streaming
         # WebSocket baseline remains a deliberate follow-up boundary.
