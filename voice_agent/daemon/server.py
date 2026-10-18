@@ -8,7 +8,7 @@ import stat
 import threading
 from typing import Any
 
-from voice_agent.voice.pipeline import VoiceTurnCancelled
+from voice_agent.voice.pipeline import VoiceTurnCancelled, VoiceTurnError
 
 from .core import DaemonCore
 
@@ -35,7 +35,7 @@ class _JsonLineHandler(socketserver.StreamRequestHandler):
                 if not isinstance(request, dict):
                     raise ValueError("request must be a JSON object")
                 response = owner.core.handle(request)
-            except (UnicodeDecodeError, json.JSONDecodeError, TypeError, ValueError, RuntimeError, VoiceTurnCancelled) as error:
+            except (UnicodeDecodeError, json.JSONDecodeError, TypeError, ValueError, RuntimeError, VoiceTurnCancelled, VoiceTurnError) as error:
                 response = {"ok": False, "error": str(error)}
             self._send(response)
 

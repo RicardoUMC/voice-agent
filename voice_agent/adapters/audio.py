@@ -67,7 +67,7 @@ class SoxAudioInput:
             if cancellation.is_set():
                 process.terminate()
                 raise ProviderCancelledError("audio capture cancelled")
-            if process.wait() != 0:
+            if process.wait() != 0 and not self._stop_requested(cancellation):
                 raise ProviderRequestError("audio capture failed")
         finally:
             watcher_done.set()
