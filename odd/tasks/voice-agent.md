@@ -41,7 +41,8 @@ T9 | S1-S4 | Add configurable silence endpointing and an explicit recording-stop
 T10 | S1-S4 | Add a local CLI client for sessions, text turns, voice turns, recording stop, and interruption | implementation | 26f3b5d
 T11 | S1-S4 | Calibrate and document VAD settings using measured microphone noise | configuration | 428c2d3
 T12 | S1-S4 | Add an installable CLI entry point for the daemon client | implementation | d94c206
-T13 | S1-S4 | Make the Pi tool and extension allowlist explicit in daemon configuration | implementation | TBD
+T13 | S1-S4 | Make the Pi tool and extension allowlist explicit in daemon configuration | implementation | b252558
+T14 | S1-S4 | Cancel remote turns when the CLI client request times out | bugfix | TBD
 
 ## Log
 
@@ -120,3 +121,7 @@ L24. User requested the remaining improvements sequentially through item 3 (verb
 > Vale, sigamos uno po uno hasta el punto 3 porfa
 
 L25. Improvement evidence: VAD ambient measurement was peak 95/RMS 37.5; `VOICE_AGENT_SILENCE_THRESHOLD=250`, `VOICE_AGENT_SILENCE_DURATION=0.8`, and related values were applied to the user service and verified in the running process. `d94c206` adds editable packaging and `voice-agent`/`voice-agent-client` entry points. The allowlist implementation emits `--tools read,grep,find` by default or `--no-tools` when empty, parses `VOICE_AGENT_PI_TOOLS`, documents extension behavior, and the restarted service reports `VOICE_AGENT_PI_TOOLS=read,grep,find` while serving sessions.
+
+L26. Live VAD test evidence: `voice-agent-client voice voice-main` was run with a 45-second wrapper and exited 124 without a response. The daemon remained in audio capture until an explicit `interrupt` request; the service then logged `turn_cancelled` and cleaned the capture process. The CLI must cancel the remote turn when its own request timeout expires.
+
+L27. Timeout cancellation fix evidence: the client now sends a best-effort `interrupt` after a `turn` or `voice` request timeout. Unit suites passed; a live `--timeout 5 voice voice-main` returned exit `2`, logged `turn_cancelled`, left the service active, and left no `rec` process (the process count check's only match was its own `pgrep` shell).

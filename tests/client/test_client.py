@@ -63,6 +63,28 @@ class ClientTests(unittest.TestCase):
             "op": "interrupt", "session_id": "s1",
         })
 
+    def test_main_interrupts_remote_turn_when_request_times_out(self):
+        import voice_agent.client as client
+
+        calls = []
+        original = client.request
+
+        def timed_request(_path, payload, **_kwargs):
+            calls.append(payload)
+            if payload["op"] == "voice_turn":
+                raise TimeoutError("timed out")
+            return {"ok": True}
+
+        try:
+            client.request = timed_request
+            self.assertEqual(main(["voice", "s1"]), 2)
+            self.assertEqual(calls, [
+                {"op": "voice_turn", "session_id": "s1"},
+                {"op": "interrupt", "session_id": "s1"},
+            ])
+        finally:
+            client.request = original
+
     def test_main_returns_nonzero_for_daemon_error(self):
         fake = FakeSocket(b'{"ok":false,"error":"not running"}\n')
         original = __import__("voice_agent.client", fromlist=["request"]).request

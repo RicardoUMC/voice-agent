@@ -47,7 +47,7 @@ voice-agent-client stop voice-main
 voice-agent-client interrupt voice-main
 ```
 
-Use `--socket PATH` to target another local daemon and `status` as an alias for `sessions`. The client prints one JSON response and exits nonzero when the daemon reports an error.
+Use `--socket PATH` to target another local daemon and `status` as an alias for `sessions`. The client prints one JSON response and exits nonzero when the daemon reports an error. If a `turn` or `voice` request reaches `--timeout`, the client sends a best-effort `interrupt` for that session before exiting, so a disconnected terminal does not leave the daemon capturing or processing indefinitely.
 
 ## Local protocol
 

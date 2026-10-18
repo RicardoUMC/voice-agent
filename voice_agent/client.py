@@ -76,8 +76,19 @@ def _payload(args: argparse.Namespace) -> dict[str, Any]:
 
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
+    payload = _payload(args)
     try:
-        response = request(args.socket, _payload(args), timeout=args.timeout)
+        response = request(args.socket, payload, timeout=args.timeout)
+    except (socket.timeout, TimeoutError) as error:
+        if payload.get("op") in {"turn", "voice_turn"}:
+            session_id = payload.get("session_id")
+            if isinstance(session_id, str):
+                try:
+                    request(args.socket, {"op": "interrupt", "session_id": session_id}, timeout=5.0)
+                except (OSError, RuntimeError, ValueError, json.JSONDecodeError):
+                    pass
+        print(f"voice-agent client: request timed out; active turn was interrupted when possible", file=sys.stderr)
+        return 2
     except (OSError, RuntimeError, ValueError, json.JSONDecodeError) as error:
         print(f"voice-agent client: {error}", file=sys.stderr)
         return 2
