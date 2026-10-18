@@ -29,6 +29,18 @@ python -m voice_agent \
 
 The default local endpoint is a Unix socket. The daemon does not open a TCP listener.
 
+Use the bundled CLI client instead of hand-writing JSONL requests:
+
+```bash
+python -m voice_agent.client sessions
+python -m voice_agent.client turn voice-main "Hola"
+python -m voice_agent.client voice voice-main
+python -m voice_agent.client stop voice-main
+python -m voice_agent.client interrupt voice-main
+```
+
+Use `--socket PATH` to target another local daemon and `status` as an alias for `sessions`. The client prints one JSON response and exits nonzero when the daemon reports an error.
+
 ## Local protocol
 
 Each request and response is one JSON object terminated by LF.
@@ -108,6 +120,7 @@ The unit restarts on failure, keeps the Unix socket and session state under the 
 Pytest is not required for the current test slices. Run:
 
 ```bash
+python -m unittest discover -s tests/client -p 'test_*.py' -v
 python -m unittest discover -s tests/daemon -p 'test_*.py' -v
 python -m unittest discover -s tests/adapters -p 'test_*.py' -v
 python -m unittest discover -s tests/conversation -p 'test_*.py' -v
