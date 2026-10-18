@@ -8,6 +8,8 @@ import stat
 import threading
 from typing import Any
 
+from voice_agent.voice.pipeline import VoiceTurnCancelled
+
 from .core import DaemonCore
 
 _MAX_REQUEST_BYTES = 1024 * 1024
@@ -33,14 +35,19 @@ class _JsonLineHandler(socketserver.StreamRequestHandler):
                 if not isinstance(request, dict):
                     raise ValueError("request must be a JSON object")
                 response = owner.core.handle(request)
-            except (UnicodeDecodeError, json.JSONDecodeError, TypeError, ValueError, RuntimeError) as error:
+            except (UnicodeDecodeError, json.JSONDecodeError, TypeError, ValueError, RuntimeError, VoiceTurnCancelled) as error:
                 response = {"ok": False, "error": str(error)}
             self._send(response)
 
     def _send(self, response: dict[str, Any]) -> None:
         encoded = (json.dumps(response, ensure_ascii=False, separators=(",", ":")) + "\n").encode("utf-8")
-        self.wfile.write(encoded)
-        self.wfile.flush()
+        try:
+            self.wfile.write(encoded)
+            self.wfile.flush()
+        except (BrokenPipeError, ConnectionResetError):
+            # A disconnected client must not turn a completed cancellation into
+            # an uncaught handler traceback or affect the daemon process.
+            return
 
 
 class JsonLineUnixServer:

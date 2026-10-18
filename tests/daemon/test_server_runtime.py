@@ -12,6 +12,7 @@ from voice_agent.daemon.runtime import PiSessionCoordinator
 from voice_agent.daemon.server import JsonLineUnixServer
 from voice_agent.daemon.sessions import JsonSessionRegistry
 from voice_agent.daemon.types import TurnResult
+from voice_agent.voice.pipeline import VoiceTurnCancelled
 
 
 class FakeBackend:
@@ -61,6 +62,27 @@ class ServerRuntimeTests(unittest.TestCase):
         coordinator.close()
         self.assertTrue(all(backend.closed for backend in created))
 
+    def test_unix_socket_server_returns_cancelled_voice_turn_error(self):
+        with tempfile.TemporaryDirectory() as directory:
+            socket_path = Path(directory) / "voice-agent.sock"
+            core = DaemonCore(
+                JsonSessionRegistry(Path(directory) / "sessions.json"),
+                _UnusedCoordinator(),
+                voice_coordinator=_CancelledVoiceCoordinator(),
+            )
+            server = JsonLineUnixServer(socket_path, core)
+            thread = threading.Thread(target=server.serve_forever, daemon=True)
+            thread.start()
+            self.assertTrue(server.ready.wait(timeout=2))
+            with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as client:
+                client.connect(str(socket_path))
+                client.sendall(b'{"op":"voice_turn","session_id":"voice-main"}\n')
+                response = json.loads(client.makefile("rb").readline())
+            self.assertEqual(response, {"ok": False, "error": "voice turn cancelled during audio_input"})
+            server.close()
+            thread.join(timeout=2)
+            self.assertFalse(thread.is_alive())
+
     def test_unix_socket_server_round_trips_json_lines(self):
         with tempfile.TemporaryDirectory() as directory:
             socket_path = Path(directory) / "voice-agent.sock"
@@ -77,6 +99,11 @@ class ServerRuntimeTests(unittest.TestCase):
             server.close()
             thread.join(timeout=2)
             self.assertFalse(thread.is_alive())
+
+
+class _CancelledVoiceCoordinator:
+    def run(self, session_id, cancellation):
+        raise VoiceTurnCancelled("audio_input")
 
 
 class _UnusedCoordinator:
