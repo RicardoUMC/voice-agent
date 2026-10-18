@@ -62,7 +62,7 @@ Pi tools and extensions remain an explicit allowlist decision; the daemon must n
 
 - `voice_agent.adapters.audio`: SoX-compatible capture and playback processes.
 - `voice_agent.adapters.deepgram`: Deepgram STT contract with injectable streaming WebSocket transport and buffered HTTP fallback. The streaming path uses the optional `websocket-client` package and matches the existing Pi dictation settings.
-- `voice_agent.adapters.kitten_tts`: lazy `kittenml.KittenTTS("KittenML/kitten-tts-2", weights="emb4")` loading.
+- `voice_agent.adapters.kitten_tts`: lazy `kittenml.KittenTTS("KittenML/kitten-tts-2", weights="emb4")` loading with the model's `Spanish` voice selected by default.
 - `voice_agent.conversation.pi_rpc`: persistent Pi child process with strict JSONL framing, readiness confirmation, `agent_settled` completion, and `clear_queue` + `abort` cancellation.
 
 KittenTTS 2 model weights use the separate Stellon Labs Community License. This project currently targets personal, non-commercial use; review the exact model terms before redistribution, commercial use, or public hosting.

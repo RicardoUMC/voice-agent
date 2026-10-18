@@ -51,7 +51,7 @@ class DeepgramConfig:
 class KittenTTSConfig:
     model: str = "KittenML/kitten-tts-2"
     weights: str = "emb4"
-    voice: str = "expr-voice-4-f"
+    voice: str = "Spanish"
     sample_rate: int = 24_000
 
     def __post_init__(self) -> None:
