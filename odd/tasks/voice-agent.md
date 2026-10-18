@@ -29,13 +29,13 @@ S4. Follow-up decisions and preferences (verbatim):
 
 ## Tasks
 
-T1 | S1-S3 | Define architecture, adapter contracts, lifecycle/state model, security boundaries, and MVP acceptance criteria | plan | TBD
-T2 | S1-S3 | Implement daemon process, configuration, local control surface, and supervised lifecycle | implementation | TBD
-T3 | S1-S3 | Implement Pi RPC conversation adapter with dedicated-session serialization, streaming, cancellation, and recovery | implementation | TBD
-T4 | S1-S2 | Implement audio/STT/TTS adapters with KittenTTS first and provider/model substitution points | implementation | TBD
+T1 | S1-S3 | Define architecture, adapter contracts, lifecycle/state model, security boundaries, and MVP acceptance criteria | plan | 552b6d5
+T2 | S1-S3 | Implement daemon process, configuration, local control surface, and supervised lifecycle | implementation | ac93f9b, 560fa2e (b56f32b hygiene)
+T3 | S1-S3 | Implement Pi RPC conversation adapter with dedicated-session serialization, streaming, cancellation, and recovery | implementation | a941bcc
+T4 | S1-S2 | Implement audio/STT/TTS adapters with KittenTTS first and provider/model substitution points | implementation | 7b6084e (partial: bundled Deepgram path is non-streaming)
 T5 | S1-S3 | Add multi-session model, observability, failure-path tests, and operational documentation | implementation | TBD
 T6 | S1-S4 | Verify MVP end to end and record unresolved platform/provider decisions | verification | TBD
-T7 | S4 | Validate the KittenTTS model/runtime/weight license and Spanish voice quality before implementation lock-in | plan | TBD
+T7 | S4 | Validate the KittenTTS model/runtime/weight license and Spanish voice quality before implementation lock-in | plan | research complete; runtime/quality validation pending
 
 ## Log
 
@@ -70,3 +70,5 @@ L4. Architecture recommendation recorded: implement a session-addressed local AP
 L5. Environment evidence: the current Pi dictation package uses Deepgram Nova-3 streaming with 16 kHz mono PCM captured through `rec`/SoX; this host has `rec`, `sox`, PipeWire capture/playback tools, and active microphone/sink devices. The daemon should reuse Deepgram as the initial STT backend while isolating capture/playback behind adapters.
 
 L6. Product confirmation recorded: KittenTTS 2 with `emb4` CPU weights is accepted for the personal/non-commercial MVP, subject to validating Spanish voice quality and documenting the separate model license.
+
+L7. Implementation evidence: commits `ac93f9b`, `7b6084e`, `a941bcc`, `b56f32b`, and `560fa2e` add the persistent session core, provider adapter boundaries, Pi RPC adapter, Python artifact hygiene, and local Unix-socket daemon service. Focused stdlib checks pass: daemon 11 tests, adapters 7 tests, conversation 4 tests, plus `compileall` and `python -m voice_agent --help`. Pytest is not installed.
