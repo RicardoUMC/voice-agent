@@ -100,3 +100,5 @@ L17. Blocked-read evidence: `61be508` adds a watcher that terminates the SoX pro
 L18. Capture cleanup evidence: `6729144` escalates capture cleanup from `terminate()` to `kill()` after a bounded wait because the real SoX process survived the first watcher. Adapter 14, daemon 15, conversation 5, and pipeline 3 tests pass. Deployment and live endpoint validation remain pending.
 
 L19. Structured voice error evidence: `a656712` treats intentional capture termination as a normal endpoint and maps `VoiceTurnError` to a redacted JSONL error response. Adapter 14, daemon 16, conversation 5, and pipeline 3 tests pass. A fresh deployed live check remains pending.
+
+L20. Live conversation diagnosis: Pi RPC readiness succeeded, but the selected `openai-codex/gpt-5.5` model returned `The 'gpt-5.5' model is not supported when using Codex with a ChatGPT account.` Direct RPC validation succeeded with `openai-codex/gpt-5.6-luna`; the user service environment was updated accordingly. A daemon text turn then returned `{"ok":true,"session_id":"voice-main","text":"hola"}`. README now records the model-selection requirement.

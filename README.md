@@ -76,7 +76,7 @@ KittenTTS 2 model weights use the separate Stellon Labs Community License. This 
 
 ## Provider setup
 
-The daemon keeps provider dependencies optional at import time. For the current local setup, install the runtime packages in the daemon environment and keep credentials outside the repository:
+The daemon keeps provider dependencies optional at import time. For the current local setup, install the runtime packages in the daemon environment and keep credentials outside the repository. When using a ChatGPT Codex account, select a model supported by that account; the validated local service setting is `VOICE_AGENT_PI_COMMAND='pi --mode rpc --model openai-codex/gpt-5.6-luna'`:
 
 ```bash
 python -m pip install websocket-client kittenml
