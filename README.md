@@ -18,6 +18,14 @@ The end-to-end process supervisor and live provider validation are still in prog
 
 ## Quick path
 
+For an editable local installation with shell commands, run:
+
+```bash
+python -m pip install --editable .
+voice-agent --help
+voice-agent-client sessions
+```
+
 Run the daemon with:
 
 ```bash
@@ -32,11 +40,11 @@ The default local endpoint is a Unix socket. The daemon does not open a TCP list
 Use the bundled CLI client instead of hand-writing JSONL requests:
 
 ```bash
-python -m voice_agent.client sessions
-python -m voice_agent.client turn voice-main "Hola"
-python -m voice_agent.client voice voice-main
-python -m voice_agent.client stop voice-main
-python -m voice_agent.client interrupt voice-main
+voice-agent-client sessions
+voice-agent-client turn voice-main "Hola"
+voice-agent-client voice voice-main
+voice-agent-client stop voice-main
+voice-agent-client interrupt voice-main
 ```
 
 Use `--socket PATH` to target another local daemon and `status` as an alias for `sessions`. The client prints one JSON response and exits nonzero when the daemon reports an error.
