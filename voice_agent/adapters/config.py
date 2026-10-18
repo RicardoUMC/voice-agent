@@ -13,10 +13,13 @@ class AudioConfig:
     sample_width: int = 2
     capture_command: tuple[str, ...] = ("rec",)
     playback_command: tuple[str, ...] = ("play",)
+    playback_format: str = "wav"
 
     def __post_init__(self) -> None:
         if self.sample_rate <= 0 or self.channels <= 0 or self.sample_width <= 0:
             raise ConfigurationError("audio dimensions must be positive")
+        if self.playback_format not in {"wav", "raw"}:
+            raise ConfigurationError("playback_format must be 'wav' or 'raw'")
 
 
 @dataclass(frozen=True)

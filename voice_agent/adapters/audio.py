@@ -43,7 +43,10 @@ class SoxAudioOutput:
     def play(self, chunks: Iterable[bytes], cancellation: Cancellation) -> None:
         if cancellation.is_set():
             raise ProviderCancelledError("audio playback cancelled")
-        command = (*self.config.playback_command, "-q", "-t", "raw", "-b", "16", "-e", "signed-integer", "-c", str(self.config.channels), "-r", str(self.config.sample_rate), "-")
+        if self.config.playback_format == "wav":
+            command = (*self.config.playback_command, "-q", "-")
+        else:
+            command = (*self.config.playback_command, "-q", "-t", "raw", "-b", str(self.config.sample_width * 8), "-e", "signed-integer", "-c", str(self.config.channels), "-r", str(self.config.sample_rate), "-")
         try:
             process = self._popen(command, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
         except OSError as exc:

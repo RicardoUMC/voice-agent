@@ -3,8 +3,8 @@ import threading
 import unittest
 import wave
 
-from voice_agent.adapters.audio import SoxAudioInput
-from voice_agent.adapters.config import DeepgramConfig, KittenTTSConfig
+from voice_agent.adapters.audio import SoxAudioInput, SoxAudioOutput
+from voice_agent.adapters.config import AudioConfig, DeepgramConfig, KittenTTSConfig
 from voice_agent.adapters.deepgram import DeepgramSTT
 from voice_agent.adapters.errors import (
     AdapterUnavailableError,
@@ -63,6 +63,41 @@ class AdapterTests(unittest.TestCase):
         token.set()
         with self.assertRaises(ProviderCancelledError):
             KittenTTS(loader=lambda *_: None).synthesize("hola", token)
+
+    def test_audio_output_preserves_kitten_wav_container(self):
+        calls = []
+
+        class Stdin:
+            def __init__(self):
+                self.data = []
+
+            def write(self, chunk):
+                self.data.append(chunk)
+
+            def close(self):
+                pass
+
+        class Process:
+            def __init__(self):
+                self.stdin = Stdin()
+
+            def poll(self):
+                return 0
+
+            def wait(self):
+                return 0
+
+            def terminate(self):
+                pass
+
+        process = Process()
+        output = SoxAudioOutput(
+            AudioConfig(playback_command=("play",), playback_format="wav"),
+            popen=lambda command, **kwargs: (calls.append(command) or process),
+        )
+        output.play([b"RIFF"], threading.Event())
+        self.assertEqual(calls, [("play", "-q", "-")])
+        self.assertEqual(process.stdin.data, [b"RIFF"])
 
     def test_audio_input_maps_missing_executable_and_cancellation(self):
         def missing(*args, **kwargs):

@@ -4,11 +4,16 @@ from dataclasses import dataclass
 from pathlib import Path
 import shlex
 
+from voice_agent.adapters.audio import SoxAudioInput, SoxAudioOutput
+from voice_agent.adapters.config import DeepgramConfig
+from voice_agent.adapters.deepgram import DeepgramSTT, DeepgramWebSocketTransport
+from voice_agent.adapters.kitten_tts import KittenTTS
 from voice_agent.conversation.pi_rpc import PiRpcConfig, PiRpcConversationBackend
+from voice_agent.voice.pipeline import LifecycleEvent, VoiceTurnCoordinator
 
 from .config import DaemonConfig
 from .core import DaemonCore
-from .runtime import PiSessionCoordinator
+from .runtime import PiSessionCoordinator, TextConversationAdapter
 from .server import JsonLineUnixServer
 from .sessions import JsonSessionRegistry
 
@@ -32,7 +37,20 @@ class VoiceDaemon:
         registry = JsonSessionRegistry(config.state_path)
         coordinator = PiSessionCoordinator(self._make_backend)
         self._coordinator = coordinator
-        self._server = JsonLineUnixServer(config.socket_path, DaemonCore(registry, coordinator), config.socket_mode)
+        voice = VoiceTurnCoordinator(
+            SoxAudioInput(),
+            DeepgramSTT(DeepgramConfig.from_environment(), streaming_transport=DeepgramWebSocketTransport()),
+            TextConversationAdapter(coordinator),
+            KittenTTS(),
+            SoxAudioOutput(),
+            on_event=self._log_event,
+        )
+        self._voice = voice
+        self._server = JsonLineUnixServer(
+            config.socket_path,
+            DaemonCore(registry, coordinator, voice_coordinator=voice),
+            config.socket_mode,
+        )
 
     def _make_backend(self, session_id: str) -> PiRpcConversationBackend:
         return PiRpcConversationBackend(
@@ -41,6 +59,17 @@ class VoiceDaemon:
                 session_id=session_id,
                 session_dir=str(self.settings.pi_session_dir) if self.settings.pi_session_dir else None,
             )
+        )
+
+    @staticmethod
+    def _log_event(event: LifecycleEvent) -> None:
+        import logging
+
+        logging.getLogger("voice_agent.voice").info(
+            "voice lifecycle event=%s session=%s stage=%s",
+            event.name,
+            event.session_id,
+            event.stage,
         )
 
     @property

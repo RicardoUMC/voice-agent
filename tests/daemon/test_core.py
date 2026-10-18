@@ -8,6 +8,7 @@ from voice_agent.daemon.config import DaemonConfig
 from voice_agent.daemon.core import DaemonCore
 from voice_agent.daemon.sessions import JsonSessionRegistry, SessionStateError
 from voice_agent.daemon.types import TurnResult
+from voice_agent.voice.pipeline import VoiceTurnResult
 
 
 class FakeCoordinator:
@@ -47,7 +48,30 @@ class FailingRegistry(JsonSessionRegistry):
         raise RuntimeError("state write failed")
 
 
+class FakeVoiceCoordinator:
+    def __init__(self):
+        self.calls = []
+
+    def run(self, session_id, cancellation):
+        self.calls.append((session_id, cancellation))
+        return VoiceTurnResult(session_id, "hola", "respuesta")
+
+
 class DaemonCoreTests(unittest.TestCase):
+    def test_voice_turn_persists_transcript_and_response(self):
+        with tempfile.TemporaryDirectory() as directory:
+            registry = JsonSessionRegistry(Path(directory) / "sessions.json")
+            voice = FakeVoiceCoordinator()
+            core = DaemonCore(registry, FakeCoordinator(), voice_coordinator=voice)
+            response = core.handle({"op": "voice_turn", "session_id": "voice-main"})
+            self.assertEqual(response, {
+                "ok": True,
+                "session_id": "voice-main",
+                "transcript": "hola",
+                "text": "respuesta",
+            })
+            self.assertEqual([(turn.user_text, turn.assistant_text) for turn in registry.get("voice-main").turns], [("hola", "respuesta")])
+
     def test_config_requires_absolute_local_paths(self):
         with self.assertRaises(ValueError):
             DaemonConfig(socket_path=Path("relative.sock"), state_path=Path("/tmp/state.json"))

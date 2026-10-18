@@ -36,9 +36,22 @@ class PiSessionCoordinator:
         if backend is not None:
             backend.interrupt(session_id)
 
+    def submit_text(self, session_id: str, text: str, cancellation: Cancellation) -> str:
+        return self.submit(session_id, text, cancellation).text
+
     def close(self) -> None:
         with self._lock:
             backends = list(self._backends.values())
             self._backends.clear()
         for backend in backends:
             backend.close()
+
+
+class TextConversationAdapter:
+    """Expose the text-only shape consumed by the voice pipeline."""
+
+    def __init__(self, coordinator: PiSessionCoordinator):
+        self._coordinator = coordinator
+
+    def submit(self, session_id: str, text: str, cancellation: Cancellation) -> str:
+        return self._coordinator.submit_text(session_id, text, cancellation)

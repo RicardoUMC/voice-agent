@@ -15,14 +15,38 @@ class CancellationState:
 class DaemonCore:
     """Transport-neutral request dispatcher for one or more persistent sessions."""
 
-    def __init__(self, registry: SessionRegistry, coordinator: TurnCoordinator):
+    def __init__(self, registry: SessionRegistry, coordinator: TurnCoordinator, voice_coordinator: Any | None = None):
         self._registry = registry
         self._coordinator = coordinator
+        self._voice_coordinator = voice_coordinator
         self._state_lock = RLock()
         self._cancellations: dict[str, CancellationState] = {}
 
     def handle(self, request: dict[str, Any]) -> dict[str, Any]:
         operation = request.get("op")
+        if operation == "voice_turn":
+            if self._voice_coordinator is None:
+                raise ValueError("voice_turn is not configured")
+            session_id = self._required(request, "session_id")
+            self._registry.ensure(session_id)
+            cancellation = CancellationState()
+            with self._state_lock:
+                if session_id in self._cancellations:
+                    raise RuntimeError(f"session already has an active turn: {session_id}")
+                self._cancellations[session_id] = cancellation
+            try:
+                result = self._voice_coordinator.run(session_id, cancellation)
+                self._registry.append_turn(session_id, result.transcript, result.response)
+                return {
+                    "ok": True,
+                    "session_id": result.session_id,
+                    "transcript": result.transcript,
+                    "text": result.response,
+                }
+            finally:
+                with self._state_lock:
+                    if self._cancellations.get(session_id) is cancellation:
+                        self._cancellations.pop(session_id, None)
         if operation == "turn":
             session_id = self._required(request, "session_id")
             text = self._required(request, "text")
